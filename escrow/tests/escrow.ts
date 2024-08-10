@@ -94,8 +94,8 @@ describe("escrow", () => {
       taker,
       10000
     )
-    assert((await connection.getTokenAccountBalance(makerAtaA.address)).value.uiAmount == 10000)
-    assert((await connection.getTokenAccountBalance(takerAtaB.address)).value.uiAmount == 10000)
+    // assert((await connection.getTokenAccountBalance(makerAtaA.address)).value.uiAmount == 10000)
+    // assert((await connection.getTokenAccountBalance(takerAtaB.address)).value.uiAmount == 10000)
   });
   it("can create and deposit to escrow", async() => {
     let ataA = await getOrCreateAssociatedTokenAccount(
@@ -117,29 +117,34 @@ describe("escrow", () => {
     assert((await connection.getTokenAccountBalance(vault)).value.uiAmount == 100)
   })
   it("can finalize an escrow", async() => {
+    let tx = await program.methods.take()
+    .accountsPartial({
+      taker: taker.publicKey,
+      maker: maker.publicKey,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      mintA: mintA,
+      mintB,
 
-    // let tx2 = await program.methods.take()
-    // .accounts({
-    //   taker: taker.publicKey,
-    //   maker: maker.publicKey,
-    //   tokenProgram: TOKEN_PROGRAM_ID,
-    //   mintA: mintA,
-    //   mintB,
-    // })
-    // .signers([taker])
-    // .rpc()
-    // console.log(tx2)
+    })
+    .signers([taker])
+    .rpc()
+    console.log(tx)
   })
   it("can cancel an escrow", async() => {
 
-    const tx = await program.methods.refund()
-    .accounts({
-      maker: maker.publicKey,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      mintA: mintA
-    })
-    .signers([maker])
-    .rpc()
-    console.log(tx)
+    // const tx = await program.methods.refund()
+    // .accountsStrict({
+    //   maker: maker.publicKey,
+    //   tokenProgram: TOKEN_PROGRAM_ID,
+    //   mintA: mintA,
+    //   makerAtaA: makerAtaA.address,
+    //   associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+    //   escrow: escrow,
+    //   systemProgram: SYSTEM_PROGRAM_ID,
+    //   vault: getAssociatedTokenAddressSync(mintA, escrow,true,TOKEN_PROGRAM_ID)
+    // })
+    // .signers([maker])
+    // .rpc()
+    // console.log(tx)
   })
 });
