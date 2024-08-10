@@ -13,24 +13,27 @@ pub struct Take<'info> {
     pub mint_a: InterfaceAccount<'info, Mint>,
     pub mint_b: InterfaceAccount<'info, Mint>,
     #[account(
-        mut,
+        init_if_needed,
+        payer = taker,
         associated_token::mint = mint_a,
         associated_token::authority = taker,
+        associated_token::token_program = token_program,
     )]
-    pub taker_ata_a: InterfaceAccount<'info, TokenAccount>,
+    pub taker_ata_a: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
         mut,
         associated_token::mint = mint_b,
         associated_token::authority = taker,
+        associated_token::token_program = token_program,
     )]
-    pub taker_ata_b: InterfaceAccount<'info, TokenAccount>,
+    pub taker_ata_b: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
         init_if_needed,
         associated_token::mint = mint_b,
         associated_token::authority = maker,
         payer = taker,
     )]
-    pub maker_ata_b: InterfaceAccount<'info, TokenAccount>,
+    pub maker_ata_b: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
         mut,
         close = maker,
@@ -68,7 +71,7 @@ impl<'info> Take<'info> {
         let signer_seeds: [&[&[u8]]; 1] = [&[
             b"escrow",
             self.maker.to_account_info().key.as_ref(),
-            &self.escrow.seed.to_be_bytes()[..],
+            &self.escrow.seed.to_le_bytes()[..],
             &[self.escrow.bump],
         ]];
 
@@ -84,12 +87,12 @@ impl<'info> Take<'info> {
             accounts, 
             &signer_seeds
         );
-        transfer_checked(ctx, self.escrow.recieve, self.mint_a.decimals)?;
+        transfer_checked(ctx, self.vault.amount, self.mint_a.decimals)?;
 
         let accounts = CloseAccount {
-            account: self.escrow.to_account_info(),
+            account: self.vault.to_account_info(),
             destination: self.taker.to_account_info(),
-            authority: self.maker.to_account_info(),
+            authority: self.escrow.to_account_info(),
         };
 
         let ctx = CpiContext::new_with_signer(

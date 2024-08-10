@@ -41,7 +41,7 @@ impl<'info> Refund<'info> {
         let signer_seeds: [&[&[u8]]; 1] = [&[
             b"escrow",
             self.maker.to_account_info().key.as_ref(),
-            &self.escrow.seed.to_be_bytes()[..],
+            &self.escrow.seed.to_le_bytes()[..],
             &[self.escrow.bump],
         ]];
     

@@ -1,11 +1,10 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Escrow } from "../target/types/escrow";
-import { Account, ASSOCIATED_TOKEN_PROGRAM_ID, createMint, getAssociatedTokenAddressSync, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID } from "@solana/spl-token"
+import { createMint, getAssociatedTokenAddressSync, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token"
 import {Keypair, PublicKey, LAMPORTS_PER_SOL} from "@solana/web3.js"
 import { assert } from "chai";
 import {randomBytes} from "crypto"
-import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system";
 
 describe("escrow", () => {
   // Configure the client to use the local cluster.
@@ -21,18 +20,19 @@ describe("escrow", () => {
   let mintA: PublicKey;
   let mintB: PublicKey;
   let makerAtaA;
-  let makerAtaB;
-  let takerAtaA
   let takerAtaB
-  let accounts: any = {}
-  const seed = new anchor.BN(100)
-  const [escrow, _bump] = PublicKey.findProgramAddressSync(
-    [Buffer.from("escrow"), maker.publicKey.toBuffer(), seed.toArrayLike(Buffer, "le", 8)],
+  const seed1 = new anchor.BN(randomBytes(8))
+  const seed2 = new anchor.BN(randomBytes(8))
+  const escrow1 = PublicKey.findProgramAddressSync(
+    [Buffer.from("escrow"), maker.publicKey.toBuffer(), seed1.toArrayLike(Buffer, "le", 8)],
     program.programId
-  )
+  )[0]
+  const escrow2 = PublicKey.findProgramAddressSync(
+    [Buffer.from("escrow"), maker.publicKey.toBuffer(), seed2.toArrayLike(Buffer, "le", 8)],
+    program.programId
+  )[0]
 
   it("Set up accounts and mints", async () => {
-    // Add your test here.
     let tx1 = await connection.requestAirdrop(maker.publicKey, LAMPORTS_PER_SOL*10)
     await connection.confirmTransaction(tx1)
     let tx2 = 
@@ -59,18 +59,6 @@ describe("escrow", () => {
       mintA,
       maker.publicKey,
     )
-    makerAtaB = await getOrCreateAssociatedTokenAccount(
-      connection,
-      maker,
-      mintB,
-      maker.publicKey
-    )
-    takerAtaA = await getOrCreateAssociatedTokenAccount(
-      connection,
-      taker,
-      mintA,
-      taker.publicKey
-    )
     takerAtaB = await getOrCreateAssociatedTokenAccount(
       connection,
       taker,
@@ -94,18 +82,10 @@ describe("escrow", () => {
       taker,
       10000
     )
-    // assert((await connection.getTokenAccountBalance(makerAtaA.address)).value.uiAmount == 10000)
-    // assert((await connection.getTokenAccountBalance(takerAtaB.address)).value.uiAmount == 10000)
   });
-  it("can create and deposit to escrow", async() => {
-    let ataA = await getOrCreateAssociatedTokenAccount(
-      connection,
-      maker,
-      mintA,
-      maker.publicKey,
-    )
-    let vault = getAssociatedTokenAddressSync(mintA, escrow,true,TOKEN_PROGRAM_ID) 
-    const _tx = await program.methods.make(seed, new anchor.BN(100), new anchor.BN(100))
+  it("can create and deposit to 2 escrows", async() => {
+    let vault = getAssociatedTokenAddressSync(mintA, escrow1,true,TOKEN_PROGRAM_ID) 
+    const tx1 = await program.methods.make(seed1, new anchor.BN(100), new anchor.BN(100))
     .accounts({
       maker: maker.publicKey,
       tokenProgram: TOKEN_PROGRAM_ID,
@@ -114,37 +94,40 @@ describe("escrow", () => {
     })
     .signers([maker])
     .rpc()
+    const tx2 = await program.methods.make(seed2, new anchor.BN(69), new anchor.BN(420))
+    .accounts({
+      maker: maker.publicKey,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      mintA: mintA,
+      mintB: mintB,
+    })
+    .signers([maker])
+    .rpc()
+    
     assert((await connection.getTokenAccountBalance(vault)).value.uiAmount == 100)
   })
-  it("can finalize an escrow", async() => {
+  it("can finalize an escrow1", async() => {
     let tx = await program.methods.take()
     .accountsPartial({
       taker: taker.publicKey,
       maker: maker.publicKey,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      mintA: mintA,
+      mintA,
       mintB,
-
+      escrow: escrow1,
+      tokenProgram: TOKEN_PROGRAM_ID,
     })
     .signers([taker])
     .rpc()
-    console.log(tx)
   })
-  it("can cancel an escrow", async() => {
-
-    // const tx = await program.methods.refund()
-    // .accountsStrict({
-    //   maker: maker.publicKey,
-    //   tokenProgram: TOKEN_PROGRAM_ID,
-    //   mintA: mintA,
-    //   makerAtaA: makerAtaA.address,
-    //   associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-    //   escrow: escrow,
-    //   systemProgram: SYSTEM_PROGRAM_ID,
-    //   vault: getAssociatedTokenAddressSync(mintA, escrow,true,TOKEN_PROGRAM_ID)
-    // })
-    // .signers([maker])
-    // .rpc()
-    // console.log(tx)
+  it("can refund escrow 2", async() => {
+    const tx2 = await program.methods.refund()
+    .accountsPartial({
+      maker: maker.publicKey,
+      mintA: mintA,
+      escrow: escrow2,
+      tokenProgram: TOKEN_PROGRAM_ID
+    })
+    .signers([maker])
+    .rpc()
   })
 });
