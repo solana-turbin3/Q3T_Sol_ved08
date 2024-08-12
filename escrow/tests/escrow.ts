@@ -84,7 +84,8 @@ describe("escrow", () => {
     )
   });
   it("can create and deposit to 2 escrows", async() => {
-    let vault = getAssociatedTokenAddressSync(mintA, escrow1,true,TOKEN_PROGRAM_ID) 
+    let vault1 = getAssociatedTokenAddressSync(mintA, escrow1,true,TOKEN_PROGRAM_ID) 
+    let vault2 = getAssociatedTokenAddressSync(mintA, escrow2,true,TOKEN_PROGRAM_ID)
     const tx1 = await program.methods.make(seed1, new anchor.BN(100), new anchor.BN(100))
     .accounts({
       maker: maker.publicKey,
@@ -104,7 +105,8 @@ describe("escrow", () => {
     .signers([maker])
     .rpc()
     
-    assert((await connection.getTokenAccountBalance(vault)).value.uiAmount == 100)
+    assert((await connection.getTokenAccountBalance(vault1)).value.uiAmount == 100)
+    assert((await connection.getTokenAccountBalance(vault2)).value.uiAmount == 69)
   })
   it("can finalize an escrow1", async() => {
     let tx = await program.methods.take()
