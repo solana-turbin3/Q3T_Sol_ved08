@@ -1,8 +1,7 @@
-use std::cmp::min;
 
-use anchor_lang::{prelude::*};
+use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::AssociatedToken, mint, token_interface::{transfer_checked, Mint, MintTo,mint_to, TokenAccount, TokenInterface, TransferChecked}
+    associated_token::AssociatedToken, token_interface::{transfer_checked, Mint, MintTo,mint_to, TokenAccount, TokenInterface, TransferChecked}
 };
 
 use crate::Config;
