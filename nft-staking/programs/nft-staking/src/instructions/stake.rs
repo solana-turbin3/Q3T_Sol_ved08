@@ -71,19 +71,26 @@ pub struct Stake<'info> {
     pub metadata_program: Program<'info, Metadata>,
 }
 
+
+
 impl <'info> Stake<'info> {
     pub fn stake(&mut self, bumps: &StakeBumps) -> Result<()> {
         
         require!(self.user_account.amount_staked < self.config.max_stake, ErrorCode::MaxAmountStaked);
 
         let cpi_program = self.token_program.to_account_info();
+
+
         let cpi_accounts = Approve{
             to: self.signer_ata.to_account_info(),
             delegate: self.stake_account.to_account_info(),
             authority: self.signer.to_account_info(),
         };
 
-        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        let cpi_ctx = CpiContext::new(
+            cpi_program, 
+            cpi_accounts
+        );
         approve(cpi_ctx, 1)?;
 
         let cpi_accounts = FreezeDelegatedAccountCpiAccounts {
@@ -94,8 +101,16 @@ impl <'info> Stake<'info> {
             token_program: &self.token_program.to_account_info(),
         };
 
+        let binding = [self.stake_account.bump];
+        let signer_seeds = &[&[
+            b"stake",
+            self.signer.to_account_info().key.as_ref(),
+            self.config.to_account_info().key.as_ref(),
+            &binding
+        ][..]];
+
         FreezeDelegatedAccountCpi::new(&self.metadata_program.to_account_info(), cpi_accounts)
-        .invoke()?;
+        .invoke_signed(signer_seeds)?;
 
         self.stake_account.set_inner(StakeAccount {
             owner: self.signer.key(),
