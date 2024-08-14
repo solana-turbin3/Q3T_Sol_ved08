@@ -1,12 +1,11 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    token_interface::{Mint, TokenInterface, Approve, TokenAccount, approve}, 
-    metadata::{
+    associated_token::AssociatedToken, metadata::{
         mpl_token_metadata::instructions::{FreezeDelegatedAccountCpi, FreezeDelegatedAccountCpiAccounts},
         MasterEditionAccount,
         Metadata,
         MetadataAccount
-    },
+    }, token_interface::{approve, Approve, Mint, TokenAccount, TokenInterface}
 };
 
 use crate::{{stake_config::StakeConfig, StakeAccount, UserAccount}, error::ErrorCode};
@@ -47,7 +46,7 @@ pub struct Stake<'info> {
         seeds::program = metadata_program.key(),
         bump,
     )]
-    pub edition: Account<'info, MetadataAccount>,
+    pub edition: Account<'info, MasterEditionAccount>,
 
     pub config: Account<'info, StakeConfig>,
     #[account(
@@ -68,6 +67,7 @@ pub struct Stake<'info> {
 
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,
+    pub associated_token: Program<'info, AssociatedToken>,
     pub metadata_program: Program<'info, Metadata>,
 }
 
@@ -86,6 +86,24 @@ impl <'info> Stake<'info> {
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
         approve(cpi_ctx, 1)?;
 
+        let cpi_accounts = FreezeDelegatedAccountCpiAccounts {
+            delegate: &self.stake_account.to_account_info(),
+            token_account: &self.signer_ata.to_account_info(),
+            edition: &self.edition.to_account_info(),
+            mint: &self.mint.to_account_info(),
+            token_program: &self.token_program.to_account_info(),
+        };
+
+        FreezeDelegatedAccountCpi::new(&self.metadata_program.to_account_info(), cpi_accounts)
+        .invoke()?;
+
+        self.stake_account.set_inner(StakeAccount {
+            owner: self.signer.key(),
+            mint: self.mint.key(),
+            last_update: Clock::get()?.unix_timestamp,
+            bump: bumps.stake_account,
+        });
+        self.user_account.amount_staked += 1;
         Ok(())
     }
 }
