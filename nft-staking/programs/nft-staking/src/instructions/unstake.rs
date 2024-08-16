@@ -86,27 +86,15 @@ impl<'info> Unstake<'info> {
         ][..]];
 
         // CHECK HERE
-        let cpi_accounts = Revoke {
-            source: self.mint_ata.to_account_info(),
-            authority: self.stake_account.to_account_info(),
-        };
-
-        let cpi_ctx = CpiContext::new_with_signer(
-            self.token_program.to_account_info(), 
-            cpi_accounts,
-            signer_seeds
-        );
-
-        revoke(cpi_ctx)?;
-
+        
         let last_update = self.stake_account.last_update;
         let current_time = Clock::get()?.unix_timestamp;
-
+        
         let time_passed = ((current_time - last_update) / (60 * 60 * 24)) as u32;
         let points_per_stake = self.config.points_per_stake as u32;
-
+        
         self.user_account.points += time_passed * points_per_stake;
-
+        
         let cpi_accounts = ThawDelegatedAccountCpiAccounts {
             delegate,
             token_account,
@@ -118,9 +106,21 @@ impl<'info> Unstake<'info> {
             metadata_program, 
             cpi_accounts,
         ).invoke_signed(signer_seeds)?;
-
+        
         self.user_account.amount_staked -= 1;
-
+        
+        let cpi_accounts = Revoke {
+            source: self.mint_ata.to_account_info(),
+            authority: self.stake_account.to_account_info(),
+        };
+        
+        let cpi_ctx = CpiContext::new(
+            self.token_program.to_account_info(), 
+            cpi_accounts,
+            // signer_seeds
+        );
+        
+        revoke(cpi_ctx)?;
         Ok(())
     }
 }
