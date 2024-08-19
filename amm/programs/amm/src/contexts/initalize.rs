@@ -1,7 +1,7 @@
 
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::AssociatedToken, token::{Mint, TokenAccount, Token},
+    associated_token::AssociatedToken, token::{Mint, Token},
 };
 
 use crate::Config;
@@ -22,20 +22,20 @@ pub struct Initalize<'info> {
         bump 
     )]
     pub config: Box<Account<'info, Config>>,
-    #[account(
-        init,
-        payer = maker,
-        associated_token::mint = mint_x,
-        associated_token::authority = config,
-    )]
-    pub vault_x: Box<Account<'info, TokenAccount>>,
-    #[account(
-        init,
-        payer = maker,
-        associated_token::mint = mint_y,
-        associated_token::authority = config,
-    )]
-    pub vault_y: Box<Account<'info, TokenAccount>>,
+    // #[account(
+    //     init,
+    //     payer = maker,
+    //     associated_token::mint = mint_x,
+    //     associated_token::authority = config,
+    // )]
+    // pub vault_x: Box<Account<'info, TokenAccount>>,
+    // #[account(
+    //     init,
+    //     payer = maker,
+    //     associated_token::mint = mint_y,
+    //     associated_token::authority = config,
+    // )]
+    // pub vault_y: Box<Account<'info, TokenAccount>>,
     #[account(
         init,
         payer = maker,

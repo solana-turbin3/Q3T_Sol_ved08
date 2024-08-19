@@ -25,11 +25,15 @@ pub struct DepositAndMint<'info> {
     )]
     pub mint_lp: Account<'info, Mint>,
     #[account(
+        init_if_needed,
+        payer = maker,
         associated_token::mint = mint_x,
         associated_token::authority = config,
     )]
     pub vault_x: Box<Account<'info, TokenAccount>>,
     #[account(
+        init_if_needed,
+        payer = maker,
         associated_token::mint = mint_y,
         associated_token::authority = config,
     )]
