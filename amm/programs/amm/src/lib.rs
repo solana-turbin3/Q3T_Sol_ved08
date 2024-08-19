@@ -8,12 +8,14 @@ declare_id!("BzSik1LnEB5Tutpf5DXS4JpqWyFuZFJNFX2gF93jRPGW");
 
 #[program]
 pub mod amm {
-
     use super::*;
 
     // Initalize a pool
-    pub fn initialize(ctx: Context<Initalize>, seed: u64, fee: u16, amount_x: u64, amount_y: u64) -> Result<()> {
+    pub fn initialize(ctx: Context<Initalize>, seed: u64, fee: u16) -> Result<()> {
         ctx.accounts.save_config(seed, fee, ctx.bumps.config, ctx.bumps.mint_lp)?;
+        Ok(())
+    }
+    pub fn deposit(ctx: Context<DepositAndMint>,amount_x: u64, amount_y: u64) -> Result<()> {
         ctx.accounts.deposit(amount_x, true)?;
         ctx.accounts.deposit(amount_y, false)?;
         ctx.accounts.mint_lp_tokens(amount_x, amount_y)?;
