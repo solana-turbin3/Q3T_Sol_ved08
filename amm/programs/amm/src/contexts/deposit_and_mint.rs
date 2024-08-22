@@ -82,7 +82,7 @@ impl<'info> DepositAndMint<'info> {
         Ok(())
     }
     pub fn mint_lp_tokens(&self, amount_x: u64, amount_y: u64) -> Result<()> {
-        let amount = amount_x.checked_add(amount_y).ok_or(ProgramError::ArithmeticOverflow)?;
+        let amount = amount_x.checked_mul(amount_y).ok_or(ProgramError::ArithmeticOverflow)?;
         let signer_seeds: [&[&[u8]]; 1] = [&[
             b"amm",
             self.mint_x.to_account_info().key.as_ref(),
