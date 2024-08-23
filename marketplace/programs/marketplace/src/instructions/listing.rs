@@ -76,5 +76,26 @@ pub struct List<'info> {
 }
 
 impl <'info> List<'info> {
-    todo!()
+    pub fn create_listing(&mut self, price: u64, bumps: &ListBumps) -> Result<()> {
+        self.listing.set_inner(Listing{
+            maker: self.maker.key(),
+            mint: self.maker_mint.key(),
+            price,
+            bump: bumps.listing,
+        });
+
+        Ok(())
+    }
+    pub fn deposit_nft(&mut self) -> Result<()> {
+        
+        let accounts = TransferChecked {
+            from: self.maker_ata.to_account_info(),
+            mint: self.maker_mint.to_account_info(),
+            to: self.vault.to_account_info(),
+            authority: self.maker.to_account_info(),
+        };
+        let cpi_ctx = CpiContext::new(self.token_program.to_account_info(), accounts);
+        transfer_checked(cpi_ctx, 1, self.maker_mint.decimals)?;
+        Ok(())
+    }
 }
