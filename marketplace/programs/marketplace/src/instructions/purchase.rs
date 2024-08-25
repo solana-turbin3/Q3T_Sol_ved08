@@ -1,2 +1,65 @@
-use anchor_lang::prelude::*;    
+use anchor_lang::{prelude::*, system_program::{Transfer, transfer}};
+use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, TokenAccount, TokenInterface, TransferChecked, transfer_checked}};
 
+use crate::{Listing, Marketplace};    
+
+#[derive(Accounts)]
+pub struct Purchase<'info> {
+    #[account(mut)]
+    pub taker: Signer<'info>,
+    #[account(
+        seeds = [b"marketplace", marketplace.name.as_str().as_bytes()],
+        bump = marketplace.bump
+    )]
+    pub marketplace: Account<'info, Marketplace>,
+    #[account(
+        seeds = [marketplace.key().as_ref(), listing.mint.as_ref()],
+        bump = listing.bump
+    )]
+    pub listing: Account<'info, Listing>,
+    #[account(
+        init_if_needed,
+        payer = taker,
+        associated_token::authority = taker,
+        associated_token::mint = maker_mint,
+    )]
+    pub taker_ata: InterfaceAccount<'info, TokenAccount>,
+    #[account(
+        associated_token::authority = listing,
+        associated_token::mint = maker_mint 
+    )]
+    pub vault: InterfaceAccount<'info, TokenAccount>,
+
+    ///CHECK: This is maker's account.
+    pub maker: UncheckedAccount<'info>,
+    pub maker_mint: InterfaceAccount<'info, Mint>,
+    pub token_program: Interface<'info, TokenInterface>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>
+}
+
+impl <'info> Purchase<'info> {
+    pub fn send_sol(&mut self) -> Result<()> {
+        let accounts = Transfer {
+            from: self.taker.to_account_info(),
+            to: self.maker.to_account_info(),
+        };
+        let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
+        transfer(ctx, self.listing.price);
+        Ok(())
+    }
+    pub fn transfer_nft(&mut self) -> Result<()> {
+        let accounts = TransferChecked {
+            from: self.vault.to_account_info(),
+            mint: self.maker_mint.to_account_info(),
+            to: self.taker_ata.to_account_info(),
+            authority: self.vault.to_account_info(),
+        };
+        // let signer_seeds = &[&[
+        //     b"vault",
+        //     self.vault.to_account_info().key.as_ref(),
+        // ]]
+        Ok(())
+    }
+    pub fn close_listing();
+}
