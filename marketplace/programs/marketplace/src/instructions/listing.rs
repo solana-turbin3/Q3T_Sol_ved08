@@ -38,8 +38,10 @@ pub struct List<'info> {
     #[account(
         init_if_needed,
         payer = maker,
-        associated_token::authority = listing,
-        associated_token::mint = maker_mint 
+        seeds = [b"vault", maker_mint.key().as_ref()],
+        bump,
+        token::authority = listing,
+        token::mint = maker_mint 
     )]
     pub vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
