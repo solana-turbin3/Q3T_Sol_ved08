@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    token_interface::{TokenAccount, Mint, TokenInterface, TransferChecked, transfer_checked },
     associated_token::AssociatedToken,
-    metadata::{Metadata, MetadataAccount, MasterEditionAccount}
+    metadata::{MasterEditionAccount, Metadata, MetadataAccount},
+    token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 
 use crate::{Listing, Marketplace};
@@ -70,16 +70,15 @@ pub struct List<'info> {
     )]
     pub master_edition: Box<Account<'info, MasterEditionAccount>>,
 
-
     pub metadata_program: Program<'info, Metadata>,
     pub system_program: Program<'info, System>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Interface<'info, TokenInterface>,
 }
 
-impl <'info> List<'info> {
+impl<'info> List<'info> {
     pub fn create_listing(&mut self, price: u64, bumps: &ListBumps) -> Result<()> {
-        self.listing.set_inner(Listing{
+        self.listing.set_inner(Listing {
             maker: self.maker.key(),
             mint: self.maker_mint.key(),
             price,
@@ -89,7 +88,6 @@ impl <'info> List<'info> {
         Ok(())
     }
     pub fn deposit_nft(&mut self) -> Result<()> {
-        
         let accounts = TransferChecked {
             from: self.maker_ata.to_account_info(),
             mint: self.maker_mint.to_account_info(),

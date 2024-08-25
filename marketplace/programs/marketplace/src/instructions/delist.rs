@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{TokenAccount, Mint, TokenInterface, TransferChecked, transfer_checked };
+use anchor_spl::token_interface::{
+    transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
+};
 
 use crate::{Listing, Marketplace};
 
@@ -37,7 +39,6 @@ pub struct Delist<'info> {
     )]
     pub vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
-
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,
 }
@@ -46,7 +47,7 @@ impl<'info> Delist<'info> {
     pub fn withdraw_nft(&mut self) -> Result<()> {
         let signer_seeds = &[&[
             self.marketplace.to_account_info().key.as_ref(),
-            self.maker_mint.to_account_info().key.as_ref()
+            self.maker_mint.to_account_info().key.as_ref(),
         ][..]];
         let accounts = TransferChecked {
             from: self.vault.to_account_info(),
@@ -54,7 +55,11 @@ impl<'info> Delist<'info> {
             to: self.maker_ata.to_account_info(),
             authority: self.listing.to_account_info(),
         };
-        let cpi_ctx = CpiContext::new_with_signer(self.token_program.to_account_info(), accounts, signer_seeds);
+        let cpi_ctx = CpiContext::new_with_signer(
+            self.token_program.to_account_info(),
+            accounts,
+            signer_seeds,
+        );
         transfer_checked(cpi_ctx, 1, self.maker_mint.decimals)?;
         Ok(())
     }

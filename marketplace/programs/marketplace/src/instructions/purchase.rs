@@ -1,9 +1,16 @@
+use anchor_lang::{
+    prelude::*,
+    system_program::{transfer, Transfer},
+};
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token_interface::{
+        close_account, transfer_checked, CloseAccount, Mint, TokenAccount, TokenInterface,
+        TransferChecked,
+    },
+};
 
-
-use anchor_lang::{prelude::*, system_program::{Transfer, transfer}};
-use anchor_spl::{associated_token::AssociatedToken, token_interface::{Mint, TokenAccount,CloseAccount, close_account, TokenInterface, TransferChecked, transfer_checked}};
-
-use crate::{Listing, Marketplace};    
+use crate::{Listing, Marketplace};
 
 #[derive(Accounts)]
 pub struct Purchase<'info> {
@@ -31,7 +38,7 @@ pub struct Purchase<'info> {
     #[account(
         mut,
         associated_token::authority = listing,
-        associated_token::mint = maker_mint 
+        associated_token::mint = maker_mint,
     )]
     pub vault: InterfaceAccount<'info, TokenAccount>,
 
@@ -40,10 +47,10 @@ pub struct Purchase<'info> {
     pub maker_mint: InterfaceAccount<'info, Mint>,
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
-    pub system_program: Program<'info, System>
+    pub system_program: Program<'info, System>,
 }
 
-impl <'info> Purchase<'info> {
+impl<'info> Purchase<'info> {
     pub fn send_sol(&mut self) -> Result<()> {
         let accounts = Transfer {
             from: self.taker.to_account_info(),
@@ -62,12 +69,16 @@ impl <'info> Purchase<'info> {
         };
         let binding = [self.listing.bump];
         let signer_seeds = &[&[
-            self.marketplace.to_account_info().key.as_ref(), 
+            self.marketplace.to_account_info().key.as_ref(),
             self.listing.mint.as_ref(),
-            &binding
+            &binding,
         ][..]];
-        let ctx = CpiContext::new_with_signer(self.token_program.to_account_info(), accounts, signer_seeds);
-        
+        let ctx = CpiContext::new_with_signer(
+            self.token_program.to_account_info(),
+            accounts,
+            signer_seeds,
+        );
+
         transfer_checked(ctx, 1, 0)?;
         Ok(())
     }
@@ -76,16 +87,19 @@ impl <'info> Purchase<'info> {
             account: self.vault.to_account_info(),
             destination: self.maker.to_account_info(),
             authority: self.listing.to_account_info(),
-        };  
+        };
 
         let binding = [self.listing.bump];
         let signer_seeds = &[&[
-            self.marketplace.to_account_info().key.as_ref(), 
+            self.marketplace.to_account_info().key.as_ref(),
             self.listing.mint.as_ref(),
-            &binding
+            &binding,
         ][..]];
-        let ctx = CpiContext::new_with_signer(self.token_program.to_account_info(), 
-        accounts, signer_seeds);
+        let ctx = CpiContext::new_with_signer(
+            self.token_program.to_account_info(),
+            accounts,
+            signer_seeds,
+        );
 
         close_account(ctx)?;
         Ok(())

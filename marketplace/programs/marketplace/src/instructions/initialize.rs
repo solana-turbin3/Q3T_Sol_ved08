@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenInterface};
 
-use crate::Marketplace;
 use crate::error::MarketplaceError;
+use crate::Marketplace;
 
 #[derive(Accounts)]
 #[instruction(name: String)]
@@ -37,9 +37,11 @@ pub struct Initialize<'info> {
 
 impl<'info> Initialize<'info> {
     pub fn init(&mut self, name: String, fees: u16, bumps: &InitializeBumps) -> Result<()> {
-        
-        require!(name.len() <= 32 && name.len() > 0, MarketplaceError::NameTooLong);
-        
+        require!(
+            name.len() <= 32 && name.len() > 0,
+            MarketplaceError::NameTooLong
+        );
+
         self.marketplace.set_inner(Marketplace {
             admin: self.admin.to_account_info().key(),
             fee: fees,
