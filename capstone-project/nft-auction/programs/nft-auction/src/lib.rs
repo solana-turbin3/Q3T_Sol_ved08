@@ -15,7 +15,17 @@ declare_id!("AJmPgdfkPmCjndPPKcG9TdUaatrcEgLxyJQ8yC5D7u7p");
 pub mod nft_auction {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        initialize::handler(ctx)
+    
+    pub fn initialize_auction(ctx: Context<InitalizeAuction>) -> Result<()> {
+        // Todo
+        Ok(())
     }
+    // pub fn bid(ctx: Context<Bid>) -> Result<()> {
+    //     // Todo
+    //     Ok(())
+    // }
+    // pub fn resolve_auction(ctx: Context<ResolveAuction>) -> Result<()> {
+    //     // Todo
+    //     Ok(())
+    // }
 }
