@@ -1,6 +1,7 @@
 # Outbid
 Description: A NFT auction platform that is built on an escrow contract, allowing users to initiate either a open auction—where the highest bid is visible to everyone—or a sealed-bid auction, where the highest bid remains hidden until the auction concludes. Bids that are double the floor price receive a special NFT as a reward for creating a value. Additionally, all auction participants are awarded a POAP (Proof of Attendance Protocol) token at the end of the auction.
 
+![](./architecture-diagram-nft-auction.png)
 ## User Stories
 
 ### Users: 
