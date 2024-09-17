@@ -1,8 +1,9 @@
 use anchor_lang::{
-    accounts::sysvar, prelude::*, system_program::{transfer, Transfer}
+    prelude::*,
+    system_program::{transfer, Transfer},
 };
 
-use crate::{Auction, error::AuctionError};
+use crate::{error::AuctionError, Auction};
 
 #[derive(Accounts)]
 pub struct Bid<'info> {
@@ -21,20 +22,31 @@ pub struct Bid<'info> {
         bump
     )]
     pub bidder_vault: SystemAccount<'info>,
-    
+
     /// CHECK: Previous bidder account
     pub previous_bidder: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
-impl <'info> Bid<'info> {
+impl<'info> Bid<'info> {
     pub fn bid(&mut self, amount: u64) -> Result<()> {
         let current_time = Clock::get()?.unix_timestamp;
         // Check auction conditions
         require!(self.auction.current_bid < amount, AuctionError::LowBidError);
-        require_keys_neq!(self.auction.current_bidder.unwrap(), self.bidder.key(), AuctionError::SameBidderError);
-        require_keys_eq!(self.auction.current_bidder.unwrap(), self.previous_bidder.key(), AuctionError::BiddersMatchError);
-        require!(current_time < self.auction.end_time, AuctionError::AuctionEnded);
+        require_keys_neq!(
+            self.auction.current_bidder.unwrap(),
+            self.bidder.key(),
+            AuctionError::SameBidderError
+        );
+        require_keys_eq!(
+            self.auction.current_bidder.unwrap(),
+            self.previous_bidder.key(),
+            AuctionError::BiddersMatchError
+        );
+        require!(
+            current_time < self.auction.end_time,
+            AuctionError::AuctionEnded
+        );
 
         // Transfer old bid amount back to previous bidder
         let accounts = Transfer {
@@ -43,11 +55,15 @@ impl <'info> Bid<'info> {
         };
         let binding = [self.auction.bump];
         let signer_seeds = &[&[
-            b"bidderVault", 
-            self.auction.to_account_info().key.as_ref(), 
-            &binding
+            b"bidderVault",
+            self.auction.to_account_info().key.as_ref(),
+            &binding,
         ][..]];
-        let ctx = CpiContext::new_with_signer(self.system_program.to_account_info(), accounts, signer_seeds);
+        let ctx = CpiContext::new_with_signer(
+            self.system_program.to_account_info(),
+            accounts,
+            signer_seeds,
+        );
 
         transfer(ctx, self.auction.current_bid)?;
 
@@ -62,7 +78,7 @@ impl <'info> Bid<'info> {
         // Update auction state
         self.auction.current_bid = amount;
         self.auction.current_bidder = Some(self.bidder.key());
-        
+
         // Check rewards eligibility
         if self.auction.floor_price.checked_mul(2).unwrap() < amount {
             // Do something here maybe like store the pubkey in a PDA

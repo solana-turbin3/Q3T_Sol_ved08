@@ -9,5 +9,10 @@ pub struct Auction {
     pub current_bid: u64,
     pub current_bidder: Option<Pubkey>,
     pub end_time: i64,
-    pub bump: u8
+    pub bump: u8,
+}
+
+#[account]
+pub struct RewardPubkeys {
+    // TODO: Add fields here
 }

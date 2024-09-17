@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::AssociatedToken, metadata::{MasterEditionAccount, Metadata, MetadataAccount}, token_interface::{Mint, TokenAccount, TokenInterface, TransferChecked, transfer_checked}
+    associated_token::AssociatedToken,
+    metadata::{MasterEditionAccount, Metadata, MetadataAccount},
+    token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
 
 use crate::Auction;
@@ -9,7 +11,7 @@ use crate::Auction;
 pub struct InitalizeAuction<'info> {
     #[account(mut)]
     pub seller: Signer<'info>,
-    
+
     pub seller_nft_mint: InterfaceAccount<'info, Mint>,
     // pub collection_mint: InterfaceAccount<'info, Mint>,
     #[account(
@@ -18,7 +20,7 @@ pub struct InitalizeAuction<'info> {
         associated_token::authority = seller,
     )]
     pub seller_nft_ata: InterfaceAccount<'info, TokenAccount>,
-    
+
     #[account(
         init,
         payer = seller,
@@ -33,17 +35,16 @@ pub struct InitalizeAuction<'info> {
         seeds = [b"nft_vault", seller_nft_mint.key().as_ref()],
         bump,
         token::authority = auction,
-        token::mint = seller_nft_mint 
+        token::mint = seller_nft_mint
     )]
     pub nft_vault: InterfaceAccount<'info, TokenAccount>,
-// THIS IS NOT REQUIRED
+    // THIS IS NOT REQUIRED
     // #[account(
     //     mut,
     //     seeds = [b"bidderVault", auction.key().as_ref()],
     //     bump
     // )]
     // pub bidder_vault: SystemAccount<'info>,
-
     #[account(
         seeds = [
             b"metadata",
@@ -74,7 +75,12 @@ pub struct InitalizeAuction<'info> {
 }
 impl<'info> InitalizeAuction<'info> {
     // TODO: Add instructions here
-    pub fn initalize_auction(&mut self, floor_price: u64, end_time: i64, bumps: &InitalizeAuctionBumps) -> Result<()> {
+    pub fn initalize_auction(
+        &mut self,
+        floor_price: u64,
+        end_time: i64,
+        bumps: &InitalizeAuctionBumps,
+    ) -> Result<()> {
         self.auction.set_inner(Auction {
             authority: self.seller.key(),
             nft_mint: self.seller_nft_mint.key(),
@@ -84,7 +90,7 @@ impl<'info> InitalizeAuction<'info> {
             end_time,
             bump: bumps.auction,
         });
-        
+
         let accounts = TransferChecked {
             from: self.seller_nft_ata.to_account_info(),
             mint: self.seller_nft_mint.to_account_info(),
