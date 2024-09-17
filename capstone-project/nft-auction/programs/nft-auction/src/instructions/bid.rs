@@ -1,6 +1,5 @@
 use anchor_lang::{
-    prelude::*,
-    system_program::{Transfer, transfer}
+    accounts::sysvar, prelude::*, system_program::{transfer, Transfer}
 };
 
 use crate::{Auction, error::AuctionError};
@@ -30,10 +29,12 @@ pub struct Bid<'info> {
 
 impl <'info> Bid<'info> {
     pub fn bid(&mut self, amount: u64) -> Result<()> {
-        // Check if bid is higher than current bid
+        let current_time = Clock::get()?.unix_timestamp;
+        // Check auction conditions
         require!(self.auction.current_bid < amount, AuctionError::LowBidError);
         require_keys_neq!(self.auction.current_bidder.unwrap(), self.bidder.key(), AuctionError::SameBidderError);
         require_keys_eq!(self.auction.current_bidder.unwrap(), self.previous_bidder.key(), AuctionError::BiddersMatchError);
+        require!(current_time < self.auction.end_time, AuctionError::AuctionEnded);
 
         // Transfer old bid amount back to previous bidder
         let accounts = Transfer {
@@ -57,6 +58,16 @@ impl <'info> Bid<'info> {
         };
         let ctx = CpiContext::new(self.system_program.to_account_info(), accounts);
         transfer(ctx, amount)?;
+
+        // Update auction state
+        self.auction.current_bid = amount;
+        self.auction.current_bidder = Some(self.bidder.key());
+        
+        // Check rewards eligibility
+        if self.auction.floor_price.checked_mul(2).unwrap() < amount {
+            // Do something here maybe like store the pubkey in a PDA
+        }
+
         Ok(())
     }
 }
