@@ -30,12 +30,19 @@ pub struct InitalizeAuction<'info> {
     #[account(
         init_if_needed,
         payer = seller,
-        seeds = [b"vault", seller_nft_mint.key().as_ref()],
+        seeds = [b"nft_vault", seller_nft_mint.key().as_ref()],
         bump,
         token::authority = auction,
         token::mint = seller_nft_mint 
     )]
-    pub vault: InterfaceAccount<'info, TokenAccount>,
+    pub nft_vault: InterfaceAccount<'info, TokenAccount>,
+// THIS IS NOT REQUIRED
+    // #[account(
+    //     mut,
+    //     seeds = [b"bidderVault", auction.key().as_ref()],
+    //     bump
+    // )]
+    // pub bidder_vault: SystemAccount<'info>,
 
     #[account(
         seeds = [
@@ -81,7 +88,7 @@ impl<'info> InitalizeAuction<'info> {
         let accounts = TransferChecked {
             from: self.seller_nft_ata.to_account_info(),
             mint: self.seller_nft_mint.to_account_info(),
-            to: self.vault.to_account_info(),
+            to: self.nft_vault.to_account_info(),
             authority: self.seller.to_account_info(),
         };
         let ctx = CpiContext::new(self.token_program.to_account_info(), accounts);
