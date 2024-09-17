@@ -7,7 +7,7 @@ pub struct Auction {
     pub nft_mint: Pubkey,
     pub floor_price: u64,
     pub current_bid: u64,
-    pub current_bidder: Pubkey,
+    pub current_bidder: Option<Pubkey>,
     pub end_time: i64,
     pub bump: u8
 }
