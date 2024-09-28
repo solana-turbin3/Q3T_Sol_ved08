@@ -10,4 +10,8 @@ pub enum AuctionError {
     BiddersMatchError,
     #[msg("Auction has ended")]
     AuctionEnded,
+    #[msg("Auction has not ended")]
+    AuctionNotEnded,
+    #[msg("Keys not equal")]
+    KeysDontMatch,
 }

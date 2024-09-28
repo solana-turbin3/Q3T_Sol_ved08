@@ -10,9 +10,13 @@ nft_auction = "AJmPgdfkPmCjndPPKcG9TdUaatrcEgLxyJQ8yC5D7u7p"
 [registry]
 url = "https://api.apr.dev"
 
+
 [provider]
 cluster = "Localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+[[test.genesis]]
+address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"  
+program = "tests/metaplex_token_metadata_program.so"
