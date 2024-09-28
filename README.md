@@ -18,4 +18,5 @@ A marketplace program to list/unlist and purchase an NFT
 ## Capstone - NFT Auction
 Final project - A NFT Auction platform with rewards
 <br>
-Repo by [ved08](https://x.com/ved0811)
+
+**_Repo by [ved08](https://x.com/ved0811)_**
